@@ -1,0 +1,6 @@
+changes from pam_exec to pam_exec2 0.1
+--------------------------------------
+
+* no use for 'quiet', pam_error never called
+* expose_authtok currently not supported
+* support for setting UID and GID to target user (PAM_USER)

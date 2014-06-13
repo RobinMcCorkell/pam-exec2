@@ -1,0 +1,53 @@
+pam_exec2
+Version 0.1
+
+ Copyright (C) 2013 Robin McCorkell
+ This file is part of pam_exec2.
+
+ pam_exec2 is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Lesser General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ pam_exec2 is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Lesser General Public License for more details.
+
+ You should have received a copy of the GNU Lesser General Public License
+ along with pam_exec2.  If not, see <http://www.gnu.org/licenses/>.
+
+A PAM module, based on pam_exec, to execute external binaries or scripts in a
+safe environment. This module provides the ability to pipe stdout and stderr
+to a logfile; set the UID and GID of the process to the target user; set the
+UID of the process to the EUID it is running as.
+
+The external process will have the following environment variables, along with
+the standard ones provided by the PAM stack:
+ * PAM_USER    - target user
+ * PAM_SERVICE - service running the PAM stack
+ * PAM_TTY     - TTY in use
+ * PAM_RHOST   - remote host calling the PAM stack
+ * PAM_RUSER   - remote user
+ * PAM_TYPE    - 'auth', 'account', 'password', 'open_session' or
+                 'close_session' depending on the PAM invokation
+
+Usage:
+ pam_exec2.so [options] /path/to/executable [args]
+
+Options:
+ * debug     - send debug information to syslog
+ * quiet     - no output to application
+ * drop_priv - set UID and GID to target user (PAM_USER)
+ * seteuid   - set UID to EUID of calling process
+ * type=...  - only execute if PAM_TYPE matches ...
+ * log=...   - redirect stdout and stderr to ...
+
+Contact:
+ Robin McCorkell <rmccorkell@karoshi.org.uk>
+
+See INSTALL for instructions on how to install this program. For preparing a
+release, run ./autogen.sh to generate the required files.
+
+All source files are contained in the src directory. Additional macros used in
+configure.ac are stored in the m4 directory.
