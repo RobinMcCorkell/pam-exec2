@@ -250,11 +250,8 @@ static int do_exec(struct opts_t *options) {
 		if (retval == (pid_t)-1) {
 			pam_syslog(options->pamh, LOG_ERR, "waitpid returns with -1: %m");
 			return PAM_SYSTEM_ERR;
-		} else if (status != 0) {
-			if (WIFEXITED(status)) {
-				pam_syslog(options->pamh, LOG_ERR, "%s failed: exit code %d",
-				           options->argv[0], WEXITSTATUS(status));
-			} else if (WIFSIGNALED(status)) {
+		} else if (status != 0 && ! WIFEXITED(status)) {
+			if (WIFSIGNALED(status)) {
 				pam_syslog(options->pamh, LOG_ERR, "%s failed: caught signal %d%s",
 				           options->argv[0], WTERMSIG(status),
 				           WCOREDUMP(status) ? " (core dumped)" : "");
@@ -264,7 +261,14 @@ static int do_exec(struct opts_t *options) {
 			}
 			return PAM_SYSTEM_ERR;
 		}
-		return PAM_SUCCESS;
+		if (options->flags & DEBUG) {
+			pam_syslog(options->pamh, LOG_DEBUG, "%s exited with %d",
+			           options->argv[0], WEXITSTATUS(status));
+		}
+		int exit = WEXITSTATUS(status);
+		if (exit >= _PAM_RETURN_VALUES)
+			exit = PAM_SERVICE_ERR;
+		return exit;
 	} else { /* child */
 		close(STDIN_FILENO);
 		close(STDOUT_FILENO);
