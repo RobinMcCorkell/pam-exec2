@@ -101,8 +101,10 @@ static int parse_argv(struct opts_t *options, int argc, const char **argv) {
 			options->flags |= PAM_SILENT;
 		} else if (strcasecmp(argv[i], "drop_priv") == 0) {
 			options->flags |= DROP_PRIV;
+			options->flags &= ~SETEUID;
 		} else if (strcasecmp(argv[i], "seteuid") == 0) {
 			options->flags |= SETEUID;
+			options->flags &= ~DROP_PRIV;
 		} else if (strcasecmp(argv[i], "use_first_pass") == 0) {
 			/* not implemented */
 		} else if (strncasecmp(argv[i], "type=", 5) == 0) {
