@@ -40,6 +40,7 @@ Options:
  * quiet     - no output to application
  * drop_priv - set UID and GID to target user (PAM_USER)
  * seteuid   - set UID to EUID of calling process
+ * syslog    - redirect stdout and stderr to syslog, as LOG_AUTHPRIV|LOG_ERR
  * type=...  - only execute if PAM_TYPE matches ...
  * log=...   - redirect stdout and stderr to ...
 

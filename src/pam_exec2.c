@@ -77,7 +77,8 @@ enum flag_t {
 */
 	DEBUG = 0x0100U,
 	SETEUID = 0x0200U,
-	DROP_PRIV = 0x0400U
+	DROP_PRIV = 0x0400U,
+	SYSLOG = 0x0800U
 };
 
 struct opts_t {
@@ -105,6 +106,9 @@ static int parse_argv(struct opts_t *options, int argc, const char **argv) {
 		} else if (strcasecmp(argv[i], "seteuid") == 0) {
 			options->flags |= SETEUID;
 			options->flags &= ~DROP_PRIV;
+		} else if (strcasecmp(argv[i], "syslog") == 0) {
+			options->flags |= SYSLOG;
+			options->logfile = NULL;
 		} else if (strcasecmp(argv[i], "use_first_pass") == 0) {
 			/* not implemented */
 		} else if (strncasecmp(argv[i], "type=", 5) == 0) {
@@ -125,6 +129,7 @@ static int parse_argv(struct opts_t *options, int argc, const char **argv) {
 			}
 		} else if (strncasecmp(argv[i], "log=", 4) == 0) {
 			options->logfile = argv[i] + 4;
+			options->flags &= ~SYSLOG;
 		} else {
 			pam_syslog(options->pamh, LOG_ERR, "Unknown option %s", argv[i]);
 			return PAM_SERVICE_ERR;
@@ -242,10 +247,41 @@ static int do_exec(struct opts_t *options) {
 		}
 	}
 
+	int stdout_fds[2];
+	FILE *stdout_file;
+	if (options->flags & SYSLOG) {
+		if (options->flags & DEBUG)
+			pam_syslog(options->pamh, LOG_DEBUG, "Opening stdout pipe to syslog");
+
+		if (pipe(stdout_fds) != 0) {
+			pam_syslog(options->pamh, LOG_ERR, "pipe(...) failed: %m");
+			return PAM_SYSTEM_ERR;
+		}
+		stdout_file = fdopen(stdout_fds[0], "r");
+		if (!stdout_file) {
+			pam_syslog(options->pamh, LOG_ERR, "fdopen(...) failed: %m");
+			return PAM_SYSTEM_ERR;
+		}
+	}
+
 	pid_t pid = fork();
 	if (pid == -1)
 		return PAM_SYSTEM_ERR;
 	if (pid > 0) { /* parent */
+		if (options->flags & SYSLOG) {
+			close(stdout_fds[1]);
+			char buffer[4096];
+			while (fgets(buffer, sizeof(buffer), stdout_file) != NULL) {
+				size_t len = strlen(buffer);
+				if (buffer[len - 1] == '\n')
+					buffer[len - 1] = '\0';
+				if (buffer[0] != '\0')
+					pam_syslog(options->pamh, LOG_ERR, "%s", buffer);
+			}
+			fclose(stdout_file);
+			close(stdout_fds[0]);
+		}
+
 		pid_t retval;
 		int status;
 		while ((retval = waitpid(pid, &status, 0)) == -1 && errno == EINTR);
@@ -297,6 +333,13 @@ static int do_exec(struct opts_t *options) {
 			if (asprintf(&buffer, "*** %s", ctime(&tm)) > 0) {
 				pam_modutil_write(STDOUT_FILENO, buffer, strlen(buffer));
 				free(buffer);
+			}
+		} else if (options->flags & SYSLOG) {
+			close(stdout_fds[0]);
+			if (move_fd(stdout_fds[1], STDOUT_FILENO) == -1) {
+				int err = errno;
+				pam_syslog(options->pamh, LOG_CRIT, "move to stdout failed: %m");
+				_exit(err);
 			}
 		} else {
 			if (options->flags & DEBUG)
