@@ -1,5 +1,5 @@
 pam_exec2
-Version 0.1
+Version 0.2
 
  Copyright (C) 2013 Robin McCorkell
  This file is part of pam_exec2.
@@ -43,6 +43,8 @@ Options:
  * syslog    - redirect stdout and stderr to syslog, as LOG_AUTHPRIV|LOG_ERR
  * type=...  - only execute if PAM_TYPE matches ...
  * log=...   - redirect stdout and stderr to ...
+
+drop_priv and seteuid are mutually exclusive, as are syslog and log=...
 
 Contact:
  Robin McCorkell <rmccorkell@karoshi.org.uk>
