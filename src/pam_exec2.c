@@ -32,6 +32,7 @@
 #include <grp.h>
 #include <sys/capability.h>
 #include <stdbool.h>
+#include <sys/select.h>
 
 #define PAM_SM_AUTH
 #define PAM_SM_ACCOUNT
@@ -44,6 +45,8 @@
 #include <security/pam_appl.h>
 
 #include <pam-once.h>
+
+#define max(x,y) ((x) > (y) ? (x) : (y))
 
 #define ENV_ITEM(n) { (n), #n }
 static struct {
@@ -254,18 +257,17 @@ static int do_exec(struct opts_t *options) {
 	}
 
 	int stdout_fds[2];
-	FILE *stdout_file;
+	int stderr_fds[2];
 	if (options->flags & SYSLOG) {
 		if (options->flags & DEBUG)
-			pam_syslog(options->pamh, LOG_DEBUG, "Opening stdout pipe to syslog");
+			pam_syslog(options->pamh, LOG_DEBUG, "Opening pipes to syslog");
 
 		if (pipe(stdout_fds) != 0) {
 			pam_syslog(options->pamh, LOG_ERR, "pipe(...) failed: %m");
 			return PAM_SYSTEM_ERR;
 		}
-		stdout_file = fdopen(stdout_fds[0], "r");
-		if (!stdout_file) {
-			pam_syslog(options->pamh, LOG_ERR, "fdopen(...) failed: %m");
+		if (pipe(stderr_fds) != 0) {
+			pam_syslog(options->pamh, LOG_ERR, "pipe(...) failed: %m");
 			return PAM_SYSTEM_ERR;
 		}
 	}
@@ -276,16 +278,58 @@ static int do_exec(struct opts_t *options) {
 	if (pid > 0) { /* parent */
 		if (options->flags & SYSLOG) {
 			close(stdout_fds[1]);
-			char buffer[4096];
-			while (fgets(buffer, sizeof(buffer), stdout_file) != NULL) {
-				size_t len = strlen(buffer);
-				if (buffer[len - 1] == '\n')
-					buffer[len - 1] = '\0';
-				if (buffer[0] != '\0')
-					pam_syslog(options->pamh, LOG_ERR, "%s", buffer);
+			close(stderr_fds[1]);
+			int maxfd = max(stdout_fds[0], stderr_fds[0]);
+			while (1) {
+				if (options->flags & DEBUG)
+					pam_syslog(options->pamh, LOG_DEBUG, "Listening on pipes");
+				fd_set fds;
+				FD_ZERO(&fds);
+				FD_SET(stdout_fds[0], &fds);
+				FD_SET(stderr_fds[0], &fds);
+
+				char buffer[4096] = {0};
+				int ret = select(maxfd + 1, &fds, NULL, NULL, NULL);
+
+				if (ret < 0) {
+					pam_syslog(options->pamh, LOG_CRIT, "select() failed: %m");
+					return PAM_SYSTEM_ERR;
+				} else if (ret > 0) {
+					if (FD_ISSET(stdout_fds[0], &fds)) {
+						int bytes = read(stdout_fds[0], buffer, sizeof(buffer) - 1);
+						if (options->flags & DEBUG)
+							pam_syslog(options->pamh, LOG_DEBUG,
+							           "Got %d bytes from stdout pipe: %s",
+							           bytes, buffer);
+						if (bytes == 0) {
+							break;
+						} else if (bytes < 0) {
+							pam_syslog(options->pamh, LOG_ERR, "read(stdout) failed: %m");
+							return -1;
+						}
+						pam_syslog(options->pamh, LOG_NOTICE, "stdout: %s", buffer);
+					}
+					if (FD_ISSET(stderr_fds[0], &fds)) {
+						int bytes = read(stderr_fds[0], buffer, sizeof(buffer) - 1);
+						if (options->flags & DEBUG)
+							pam_syslog(options->pamh, LOG_DEBUG,
+							           "Got %d bytes from stderr pipe: %s",
+							           bytes, buffer);
+						if (bytes == 0) {
+							break;
+						} else if (bytes < 0) {
+							pam_syslog(options->pamh, LOG_ERR, "read(stderr) failed: %m");
+							return -1;
+						}
+						pam_syslog(options->pamh, LOG_ERR, "stderr: %s", buffer);
+					}
+				}
 			}
-			fclose(stdout_file);
 			close(stdout_fds[0]);
+			close(stderr_fds[0]);
+
+			if (options->flags & DEBUG)
+				pam_syslog(options->pamh, LOG_DEBUG, "Pipes closed");
 		}
 
 		pid_t retval;
@@ -334,6 +378,12 @@ static int do_exec(struct opts_t *options) {
 				pam_syslog(options->pamh, LOG_CRIT, "move to stdout failed: %m");
 				_exit(err);
 			}
+			if (dup2(STDOUT_FILENO, STDERR_FILENO) == -1) {
+				int err = errno;
+				pam_syslog(options->pamh, LOG_CRIT, "dup2 to stderr failed: %m");
+				_exit(err);
+			}
+
 			time_t tm = time(NULL);
 			char *buffer;
 			if (asprintf(&buffer, "*** %s", ctime(&tm)) > 0) {
@@ -342,9 +392,15 @@ static int do_exec(struct opts_t *options) {
 			}
 		} else if (options->flags & SYSLOG) {
 			close(stdout_fds[0]);
+			close(stderr_fds[0]);
 			if (move_fd(stdout_fds[1], STDOUT_FILENO) == -1) {
 				int err = errno;
 				pam_syslog(options->pamh, LOG_CRIT, "move to stdout failed: %m");
+				_exit(err);
+			}
+			if (move_fd(stderr_fds[1], STDERR_FILENO) == -1) {
+				int err = errno;
+				pam_syslog(options->pamh, LOG_CRIT, "move to stderr failed: %m");
 				_exit(err);
 			}
 		} else {
@@ -363,11 +419,11 @@ static int do_exec(struct opts_t *options) {
 				pam_syslog(options->pamh, LOG_CRIT, "move to stdout failed: %m");
 				_exit(err);
 			}
-		}
-		if (dup2(STDOUT_FILENO, STDERR_FILENO) == -1) {
-			int err = errno;
-			pam_syslog(options->pamh, LOG_CRIT, "dup2 to stderr failed: %m");
-			_exit(err);
+			if (dup2(STDOUT_FILENO, STDERR_FILENO) == -1) {
+				int err = errno;
+				pam_syslog(options->pamh, LOG_CRIT, "dup2 to stderr failed: %m");
+				_exit(err);
+			}
 		}
 
 		/* copy argv */

@@ -40,7 +40,8 @@ Options:
  * quiet     - no output to application
  * drop_priv - set UID and GID to target user (PAM_USER)
  * seteuid   - set UID to EUID of calling process
- * syslog    - redirect stdout and stderr to syslog, as LOG_AUTHPRIV|LOG_ERR
+ * syslog    - redirect stdout and stderr to syslog (LOG_AUTHPRIV):
+               stdout as LOG_NOTICE, stderr as LOG_ERR
  * once      - use pam-once to limit execution to first open_session and last
                close_session of a user - only applicable for session type
  * type=...  - only execute if PAM_TYPE matches ...
