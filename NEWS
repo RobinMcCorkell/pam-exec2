@@ -1,3 +1,7 @@
+changes from 0.2 to 0.3
+-----------------------
+* pam-once support with new 'once' option
+
 changes from 0.1 to 0.2
 -----------------------
 * the module will return with the exit code of the external process (if valid)

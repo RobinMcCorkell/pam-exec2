@@ -1,5 +1,5 @@
 pam_exec2
-Version 0.2
+Version 0.3
 
  Copyright (C) 2013 Robin McCorkell
  This file is part of pam_exec2.
@@ -30,7 +30,7 @@ the standard ones provided by the PAM stack:
  * PAM_RHOST   - remote host calling the PAM stack
  * PAM_RUSER   - remote user
  * PAM_TYPE    - 'auth', 'account', 'password', 'open_session' or
-                 'close_session' depending on the PAM invokation
+                 'close_session' depending on the PAM invocation
 
 Usage:
  pam_exec2.so [options] /path/to/executable [args]
