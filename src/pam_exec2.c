@@ -200,6 +200,80 @@ static int move_fd(int newfd, int fd) {
 	return 0;
 }
 
+static int syslog_output(struct opts_t *options, int stdout, int stderr) {
+	int maxfd = max(stdout, stderr);
+	char buffer[1024];
+	while (1) {
+		if (options->flags & DEBUG)
+			pam_syslog(options->pamh, LOG_DEBUG, "Listening on pipes");
+		fd_set fds;
+		FD_ZERO(&fds);
+		FD_SET(stdout, &fds);
+		FD_SET(stderr, &fds);
+
+		int ret = select(maxfd + 1, &fds, NULL, NULL, NULL);
+
+		if (ret < 0) {
+			pam_syslog(options->pamh, LOG_CRIT, "select() failed: %m");
+			return PAM_SYSTEM_ERR;
+		} else if (ret > 0) {
+			if (FD_ISSET(stdout, &fds)) {
+				int bytes = read(stdout, buffer, sizeof(buffer) - 1);
+				buffer[bytes] = '\0';
+				if (options->flags & DEBUG)
+					pam_syslog(options->pamh, LOG_DEBUG,
+					           "Got %d bytes from stdout pipe: %s",
+					           bytes, buffer);
+				if (bytes == 0) {
+					break;
+				} else if (bytes < 0) {
+					pam_syslog(options->pamh, LOG_ERR, "read(stdout) failed: %m");
+					return PAM_SYSTEM_ERR;
+				}
+
+				char *start = buffer;
+				char *end;
+				do {
+					end = strchr(start, '\n');
+					if (end != NULL)
+						*end = '\0';
+					if (strlen(start) > 0)
+						pam_syslog(options->pamh, LOG_NOTICE, "stdout: %s", start);
+					if (end != NULL)
+						start = end + 1;
+				} while (end != NULL);
+			}
+			if (FD_ISSET(stderr, &fds)) {
+				int bytes = read(stderr, buffer, sizeof(buffer) - 1);
+				buffer[bytes] = '\0';
+				if (options->flags & DEBUG)
+					pam_syslog(options->pamh, LOG_DEBUG,
+					           "Got %d bytes from stderr pipe: %s",
+					           bytes, buffer);
+				if (bytes == 0) {
+					break;
+				} else if (bytes < 0) {
+					pam_syslog(options->pamh, LOG_ERR, "read(stderr) failed: %m");
+					return PAM_SYSTEM_ERR;
+				}
+
+				char *start = buffer;
+				char *end;
+				do {
+					end = strchr(start, '\n');
+					if (end != NULL)
+						*end = '\0';
+					if (strlen(start) > 0)
+						pam_syslog(options->pamh, LOG_ERR, "stderr: %s", start);
+					if (end != NULL)
+						start = end + 1;
+				} while (end != NULL);
+			}
+		}
+	}
+	return PAM_SUCCESS;
+}
+
 static int do_exec(struct opts_t *options) {
 	struct passwd *pwd;
 	bool do_setuid = false, do_setgid = false;
@@ -279,54 +353,13 @@ static int do_exec(struct opts_t *options) {
 		if (options->flags & SYSLOG) {
 			close(stdout_fds[1]);
 			close(stderr_fds[1]);
-			int maxfd = max(stdout_fds[0], stderr_fds[0]);
-			char buffer[1024];
-			while (1) {
-				if (options->flags & DEBUG)
-					pam_syslog(options->pamh, LOG_DEBUG, "Listening on pipes");
-				fd_set fds;
-				FD_ZERO(&fds);
-				FD_SET(stdout_fds[0], &fds);
-				FD_SET(stderr_fds[0], &fds);
 
-				int ret = select(maxfd + 1, &fds, NULL, NULL, NULL);
-
-				if (ret < 0) {
-					pam_syslog(options->pamh, LOG_CRIT, "select() failed: %m");
-					return PAM_SYSTEM_ERR;
-				} else if (ret > 0) {
-					if (FD_ISSET(stdout_fds[0], &fds)) {
-						int bytes = read(stdout_fds[0], buffer, sizeof(buffer) - 1);
-						buffer[bytes] = '\0';
-						if (options->flags & DEBUG)
-							pam_syslog(options->pamh, LOG_DEBUG,
-							           "Got %d bytes from stdout pipe: %s",
-							           bytes, buffer);
-						if (bytes == 0) {
-							break;
-						} else if (bytes < 0) {
-							pam_syslog(options->pamh, LOG_ERR, "read(stdout) failed: %m");
-							return -1;
-						}
-						pam_syslog(options->pamh, LOG_NOTICE, "stdout: %s", buffer);
-					}
-					if (FD_ISSET(stderr_fds[0], &fds)) {
-						int bytes = read(stderr_fds[0], buffer, sizeof(buffer) - 1);
-						buffer[bytes] = '\0';
-						if (options->flags & DEBUG)
-							pam_syslog(options->pamh, LOG_DEBUG,
-							           "Got %d bytes from stderr pipe: %s",
-							           bytes, buffer);
-						if (bytes == 0) {
-							break;
-						} else if (bytes < 0) {
-							pam_syslog(options->pamh, LOG_ERR, "read(stderr) failed: %m");
-							return -1;
-						}
-						pam_syslog(options->pamh, LOG_ERR, "stderr: %s", buffer);
-					}
-				}
+			int ret;
+			if ((ret = syslog_output(options, stdout_fds[0], stderr_fds[0]))
+			     != PAM_SUCCESS) {
+				return ret;
 			}
+
 			close(stdout_fds[0]);
 			close(stderr_fds[0]);
 
