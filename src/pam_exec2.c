@@ -41,6 +41,9 @@
 #include <security/pam_modules.h>
 #include <security/pam_modutil.h>
 #include <security/pam_ext.h>
+#include <security/pam_appl.h>
+
+#include <pam-once.h>
 
 #define ENV_ITEM(n) { (n), #n }
 static struct {
@@ -78,7 +81,8 @@ enum flag_t {
 	DEBUG = 0x0100U,
 	SETEUID = 0x0200U,
 	DROP_PRIV = 0x0400U,
-	SYSLOG = 0x0800U
+	SYSLOG = 0x0800U,
+	ONCE = 0x1000U
 };
 
 struct opts_t {
@@ -109,6 +113,8 @@ static int parse_argv(struct opts_t *options, int argc, const char **argv) {
 		} else if (strcasecmp(argv[i], "syslog") == 0) {
 			options->flags |= SYSLOG;
 			options->logfile = NULL;
+		} else if (strcasecmp(argv[i], "once") == 0) {
+			options->flags |= ONCE;
 		} else if (strcasecmp(argv[i], "use_first_pass") == 0) {
 			/* not implemented */
 		} else if (strncasecmp(argv[i], "type=", 5) == 0) {
@@ -533,6 +539,18 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 	if (options.type.id != OPEN_SESSION)
 		return PAM_IGNORE;
 
+	if (options.flags & ONCE) {
+		int flags = (options.flags & DEBUG) ? PAM_ONCE_DEBUG : 0;
+		ret = pam_once_open_session(pamh, flags);
+		if (ret == PAM_IGNORE) {
+			return PAM_IGNORE;
+		} else if (ret != PAM_SUCCESS) {
+			pam_syslog(pamh, LOG_ERR, "pam_once_open_session failed: %s",
+			           pam_strerror(pamh, ret));
+			return ret;
+		}
+	}
+
 	return do_exec(&options);
 }
 
@@ -550,6 +568,18 @@ pam_sm_close_session(pam_handle_t *pamh, int flags,
 
 	if (options.type.id != CLOSE_SESSION)
 		return PAM_IGNORE;
+
+	if (options.flags & ONCE) {
+		int flags = (options.flags & DEBUG) ? PAM_ONCE_DEBUG : 0;
+		ret = pam_once_close_session(pamh, flags);
+		if (ret == PAM_IGNORE) {
+			return PAM_IGNORE;
+		} else if (ret != PAM_SUCCESS) {
+			pam_syslog(pamh, LOG_ERR, "pam_once_close_session failed: %s",
+			           pam_strerror(pamh, ret));
+			return ret;
+		}
+	}
 
 	return do_exec(&options);
 }
