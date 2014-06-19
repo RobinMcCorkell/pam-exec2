@@ -1,3 +1,10 @@
+changes from 0.3 to 0.4
+-----------------------
+* stdout and stderr are separated, with stderr being logged as LOG_ERR while
+  stdout is logged as LOG_NOTICE
+* fixed stdout/stderr -> syslog buffer pollution issue
+* fixed multi-line stdout/stderr issue
+
 changes from 0.2 to 0.3
 -----------------------
 * pam-once support with new 'once' option
