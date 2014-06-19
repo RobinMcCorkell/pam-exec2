@@ -280,6 +280,7 @@ static int do_exec(struct opts_t *options) {
 			close(stdout_fds[1]);
 			close(stderr_fds[1]);
 			int maxfd = max(stdout_fds[0], stderr_fds[0]);
+			char buffer[1024];
 			while (1) {
 				if (options->flags & DEBUG)
 					pam_syslog(options->pamh, LOG_DEBUG, "Listening on pipes");
@@ -288,7 +289,6 @@ static int do_exec(struct opts_t *options) {
 				FD_SET(stdout_fds[0], &fds);
 				FD_SET(stderr_fds[0], &fds);
 
-				char buffer[4096] = {0};
 				int ret = select(maxfd + 1, &fds, NULL, NULL, NULL);
 
 				if (ret < 0) {
@@ -297,6 +297,7 @@ static int do_exec(struct opts_t *options) {
 				} else if (ret > 0) {
 					if (FD_ISSET(stdout_fds[0], &fds)) {
 						int bytes = read(stdout_fds[0], buffer, sizeof(buffer) - 1);
+						buffer[bytes] = '\0';
 						if (options->flags & DEBUG)
 							pam_syslog(options->pamh, LOG_DEBUG,
 							           "Got %d bytes from stdout pipe: %s",
@@ -311,6 +312,7 @@ static int do_exec(struct opts_t *options) {
 					}
 					if (FD_ISSET(stderr_fds[0], &fds)) {
 						int bytes = read(stderr_fds[0], buffer, sizeof(buffer) - 1);
+						buffer[bytes] = '\0';
 						if (options->flags & DEBUG)
 							pam_syslog(options->pamh, LOG_DEBUG,
 							           "Got %d bytes from stderr pipe: %s",
