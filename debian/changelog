@@ -1,8 +1,14 @@
+pam-exec2 (0.5-3~trusty) trusty; urgency=low
+
+  * Fix build errors
+
+ -- Robin McCorkell <rmccorkell@karoshi.org.uk> Thu, 03 Jul 2014 22:43:18 +0100
+
 pam-exec2 (0.5-2~trusty) trusty; urgency=low
 
-  * Fix for Launchpad
+  * Fix build errors
 
- -- Robin McCorkell <rmccorkell@karoshi.org.uk> Thu, 03 Jul 2014 22:25:00 +0100
+ -- Robin McCorkell <rmccorkell@karoshi.org.uk> Thu, 03 Jul 2014 22:42:18 +0100
 
 pam-exec2 (0.5-1~trusty) trusty; urgency=low
 
