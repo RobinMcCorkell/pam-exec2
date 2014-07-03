@@ -1,0 +1,89 @@
+commit 3ab623f
+Author: Robin McCorkell <rmccorkell@karoshi.org.uk>
+Date:   Thu Jul 3 21:55:56 2014 +0100
+
+    Release 0.5
+
+commit 2ba4a72
+Author: Robin McCorkell <rmccorkell@karoshi.org.uk>
+Date:   Thu Jul 3 21:54:22 2014 +0100
+
+    Change package name to pam-exec2
+
+commit 6ffef9e
+Author: Robin McCorkell <rmccorkell@karoshi.org.uk>
+Date:   Thu Jul 3 20:48:11 2014 +0100
+
+    Fix autogen.sh
+
+commit a32ceb0
+Author: Robin McCorkell <rmccorkell@karoshi.org.uk>
+Date:   Sun Jun 22 00:20:15 2014 +0100
+
+    Better autoconf module directory support
+
+commit 538dfc2
+Author: Robin McCorkell <rmccorkell@karoshi.org.uk>
+Date:   Thu Jun 19 22:27:54 2014 +0100
+
+    Version bump 0.4
+
+commit b4a31fd
+Author: Robin McCorkell <rmccorkell@karoshi.org.uk>
+Date:   Thu Jun 19 21:46:18 2014 +0100
+
+    Multi-line syslog output support
+
+commit e8b4227
+Author: Robin McCorkell <rmccorkell@karoshi.org.uk>
+Date:   Thu Jun 19 20:43:58 2014 +0100
+
+    Fix syslog buffer pollution
+
+commit 4607752
+Author: Robin McCorkell <rmccorkell@karoshi.org.uk>
+Date:   Thu Jun 19 19:37:41 2014 +0100
+
+    Split syslog output redirection into stdout/stderr
+
+commit f24711a
+Author: Robin McCorkell <rmccorkell@karoshi.org.uk>
+Date:   Thu Jun 19 18:31:42 2014 +0100
+
+    Version bump 0.3
+
+commit 429fdf9
+Author: Robin McCorkell <rmccorkell@karoshi.org.uk>
+Date:   Thu Jun 19 16:10:01 2014 +0100
+
+    Add pam-once support
+
+commit e5ca11e
+Author: Robin McCorkell <rmccorkell@karoshi.org.uk>
+Date:   Sat Jun 14 22:50:32 2014 +0100
+
+    Version bump 0.2
+
+commit c771342
+Author: Robin McCorkell <rmccorkell@karoshi.org.uk>
+Date:   Sat Jun 14 22:48:19 2014 +0100
+
+    Add syslog option
+
+commit 18bb6f7
+Author: Robin McCorkell <rmccorkell@karoshi.org.uk>
+Date:   Sat Jun 14 17:53:12 2014 +0100
+
+    Make drop_priv and seteuid mutually exclusive
+
+commit 5bbe6b0
+Author: Robin McCorkell <rmccorkell@karoshi.org.uk>
+Date:   Sat Jun 14 17:48:19 2014 +0100
+
+    Return with process exit code if valid
+
+commit f29ae34
+Author: Robin McCorkell <rmccorkell@karoshi.org.uk>
+Date:   Fri Jun 13 10:45:26 2014 +0100
+
+    Initial commit

@@ -1,0 +1,27 @@
+changes from 0.4 to 0.5
+-----------------------
+ * Change package name to pam-exec2
+ * Fix autogen.sh
+
+changes from 0.3 to 0.4
+-----------------------
+* stdout and stderr are separated, with stderr being logged as LOG_ERR while
+  stdout is logged as LOG_NOTICE
+* fixed stdout/stderr -> syslog buffer pollution issue
+* fixed multi-line stdout/stderr issue
+
+changes from 0.2 to 0.3
+-----------------------
+* pam-once support with new 'once' option
+
+changes from 0.1 to 0.2
+-----------------------
+* the module will return with the exit code of the external process (if valid)
+* a new 'syslog' option to redirect stdout and stderr to syslog
+
+changes from pam-exec to pam-exec2 0.1
+--------------------------------------
+
+* no use for 'quiet', pam_error never called
+* expose_authtok currently not supported
+* support for setting UID and GID to target user (PAM_USER)
