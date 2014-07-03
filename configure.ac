@@ -1,4 +1,4 @@
-AC_INIT([pam-exec2], [0.4], [rmccorkell@karoshi.org.uk])
+AC_INIT([pam-exec2], [0.5], [rmccorkell@karoshi.org.uk])
 AC_PREREQ([2.61])
 
 AC_CONFIG_SRCDIR([src/pam_exec2.c])
