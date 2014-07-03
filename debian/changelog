@@ -1,3 +1,9 @@
+pam-exec2 (0.5-2~trusty) trusty; urgency=low
+
+  * Fix for Launchpad
+
+ -- Robin McCorkell <rmccorkell@karoshi.org.uk> Thu, 03 Jul 2014 22:25:00 +0100
+
 pam-exec2 (0.5-1~trusty) trusty; urgency=low
 
   * Upstream release 0.5
