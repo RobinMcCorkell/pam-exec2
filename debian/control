@@ -1,0 +1,19 @@
+Source: pam-exec2
+Priority: optional
+Maintainer: Robin McCorkell <rmccorkell@karoshi.org.uk>
+Build-Depends: dh-exec (>= 0.3), debhelper (>= 8.0.0), libpam0g-dev, 
+ pam-once-dev, libcap-dev
+Standards-Version: 3.9.4
+Section: admin
+Homepage: https://github.com/Xenopathic/pam-exec2
+
+Package: pam-exec2
+Section: admin
+Architecture: linux-any
+Depends: ${shlibs:Depends}, ${misc:Depends},
+ libpam-runtime, pam-once0, libcap2
+Description: PAM module with enhanced pam-exec capabilities
+ This module provides the ability to execute external programs from the PAM
+ stack, in a safe environment. It can redirect process output to a logfile or
+ to syslog, set the UID and GID of the process to match the target user, and
+ only execute once per user with pam-once
