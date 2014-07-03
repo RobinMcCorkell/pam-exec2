@@ -1,19 +1,19 @@
 /*
 	Copyright (C) 2014 Robin McCorkell <rmccorkell@karoshi.org.uk>
-	This file is part of pam_exec2.
+	This file is part of pam-exec2.
 
-	pam_exec2 is free software: you can redistribute it and/or modify
+	pam-exec2 is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation, either version 3 of the License, or
 	(at your option) any later version.
 
-	pam_exec2 is distributed in the hope that it will be useful,
+	pam-exec2 is distributed in the hope that it will be useful,
 	but WITHOUT ANY WARRANTY; without even the implied warranty of
 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 	GNU General Public License for more details.
 
 	You should have received a copy of the GNU General Public License
-	along with pam_exec2.  If not, see <http://www.gnu.org/licenses/>.
+	along with pam-exec2.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <stdarg.h>

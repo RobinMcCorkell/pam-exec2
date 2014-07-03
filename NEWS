@@ -14,7 +14,7 @@ changes from 0.1 to 0.2
 * the module will return with the exit code of the external process (if valid)
 * a new 'syslog' option to redirect stdout and stderr to syslog
 
-changes from pam_exec to pam_exec2 0.1
+changes from pam-exec to pam-exec2 0.1
 --------------------------------------
 
 * no use for 'quiet', pam_error never called
